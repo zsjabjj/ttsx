@@ -14,13 +14,16 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import sys
+# 添加应用的头路径,可以在注册应用时直接使用应用名
+sys.path.insert(1, os.path.join(BASE_DIR, 'apps'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'q&jpcap97-h5r&$_1xlh$tfg#&nz&my$^=**2(+0g#l)pzy0n9'
+SECRET_KEY = '$a=1vu(-f&!%q^+awq%t*oc@))*5=*p1=l6t%woq!30bd--^k4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +40,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 加了apps路径,注册时直接写应用名称
+    'users',
+    'goods',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -55,7 +61,8 @@ ROOT_URLCONF = 'ttsx.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')]
+        ,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,8 +83,12 @@ WSGI_APPLICATION = 'ttsx.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ttsx',
+        'HOST':'localhost',
+        'USER':'root',
+        'PASSWORD':'mysql',
+        'PORT':'3306',
     }
 }
 
@@ -85,9 +96,9 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-Hans'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -100,3 +111,36 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# 讲认证引导到自己建立的模型类中
+AUTH_USER_MODEL = 'users.User'
+
+# 确定发邮件服务器,配置发送邮件服务器参数
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # 导入邮件模块
+EMAIL_HOST = 'smtp.163.com' # 发邮件主机
+EMAIL_PORT = 25 # 发邮件端口
+EMAIL_HOST_USER = 'zsj888878@163.com' # 授权的邮箱
+EMAIL_HOST_PASSWORD = 'zsj878888' # 邮箱授权时获得的密码，非注册登录密码
+EMAIL_FROM = '天天生鲜<zsj888878@163.com>' # 发件人抬头
+
+# 配置redis缓存
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6379/5",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# Session
+# http://django-redis-chs.readthedocs.io/zh_CN/latest/#session-backend
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# 用于指定装饰器@login_required验证失败后跳转到的路径
+LOGIN_URL = '/users/login'
