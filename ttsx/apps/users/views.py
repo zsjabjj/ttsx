@@ -2,6 +2,7 @@ import re
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
+from django_redis import get_redis_connection
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, SignatureExpired
 from django.db import IntegrityError
 from django.http import HttpResponse
@@ -10,6 +11,8 @@ from users.models import User
 from django.views.generic import View
 from Celery.tasks import send_active_email
 from users.models import Address
+
+from goods.models import GoodsSKU
 from utils.views import LoginRequiredMixin
 
 
@@ -39,8 +42,18 @@ class UserInfoView(LoginRequiredMixin, View):
             address = user.address_set.latest('create_time')
         except Address.DoesNotExist:
             address = None
+        # 查询用户浏览记录信息：存储在redis中，以列表形式存储，存储sku_id, "history_userid: [0,1,2,3,4,5]"
+        redis_conn = get_redis_connection('default')
+        # 查询redis数据库中的浏览记录,查询最新的五条,将来保存记录时记得从左向右保存
+        sku_ids = redis_conn.lrange('history_%s' % user.id, 0 ,4)
+        # 遍历sku_ids，分别取出每个sku_id,然后根据sku_id查询商品sku信息
+        skuList = list()
+        for sku_id in sku_ids:
+            sku = GoodsSKU.objects.get(id=sku_id)
+            skuList.append(sku)
 
-        context = {'address':address}
+
+        context = {'address':address, 'skuList':skuList}
 
         return render(request, 'user_center_info.html', context)
 
@@ -91,7 +104,8 @@ class LogoutView(View):
     # 退出登录本质：清除用户相关的session
     def get(self, request):
         logout(request)
-        return HttpResponse('退出登录成功')
+        return redirect(reverse('goods:index'))
+        # return HttpResponse('退出登录成功')
 
 
 # 登录
@@ -130,6 +144,9 @@ class LoginView(View):
             # 参数为3600*24*10,cookie中sessionid有效期为十天
             request.session.set_expiry(3600 * 24 * 10)
         # 登录后给的响应
+        next = request.GET.get('next')
+        if next:
+            return redirect(next)
         print('2')
         return redirect(reverse('goods:index'))
 

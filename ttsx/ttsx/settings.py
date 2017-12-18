@@ -40,9 +40,12 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'tinymce'  # 富文本编辑器
     # 加了apps路径,注册时直接写应用名称
     'users',
     'goods',
+    'orders',
+    'cart',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -144,3 +147,16 @@ SESSION_CACHE_ALIAS = "default"
 
 # 用于指定装饰器@login_required验证失败后跳转到的路径
 LOGIN_URL = '/users/login'
+
+# 配置Django自定义的存储系统
+DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.FastDFSStorage'
+CLIENT_CONF = os.path.join(BASE_DIR, 'utils/fastdfs/client.conf')
+
+SERVER_IP = 'http://0.0.0.0:8888/'
+
+# 富文本编辑器的样式设置
+TINYMCE_DEFAULT_CONFIG = {
+  'theme': 'advanced', # 丰富样式
+  'width': 600,
+  'height': 400,
+}

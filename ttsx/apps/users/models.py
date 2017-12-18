@@ -15,6 +15,11 @@ from utils.models import BaseModel
 class User(AbstractUser, BaseModel):
     class Meta:
         db_table = 'df_users'
+        verbose_name = '用户信息'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.username
 
     def generate_active_token(self):
         """生成激活令牌"""
@@ -33,5 +38,10 @@ class Address(BaseModel):
     zip_code = models.CharField(max_length=6, verbose_name='邮政编码')
     user = models.ForeignKey(User, verbose_name='所属用户')
 
+    def __str__(self):
+        return self.consignee
+
     class Meta:
         db_table = 'df_address'
+        verbose_name = '收货地址'
+        verbose_name_plural = verbose_name
