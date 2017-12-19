@@ -1,12 +1,10 @@
 import os
 os.environ["DJANGO_SETTINGS_MODULE"] = "ttsx.settings"
 # 放到Celery服务器上时添加的代码
-# import django
-# django.setup()
-
+import django
+django.setup()
 from django.template import loader
 from goods.models import GoodsCategory, IndexGoodsBanner, IndexPromotionBanner, IndexCategoryGoodsBanner
-
 from celery import Celery
 # Celery()中需要两个参数,一个参数是异步任务执行的路径,另一个参数是存放任务的队列地址
 # 使用一个叫broker(中间人)来协client(任务的发出者)和worker(任务的处理者)
@@ -33,9 +31,7 @@ def send_active_email(to_email, user_name, token):
 
 @app.task
 def get_static_index():
-
     print('get_static_index_start')
-
     # 查询商品类别信息
     categorys = GoodsCategory.objects.all()
     # 查询商品轮播,幻灯片
@@ -74,5 +70,4 @@ def get_static_index():
     # 将html数据写入静态文件中
     with open(html_path, 'w') as f:
         f.write(html_data)
-
     print('get_static_index_end')
