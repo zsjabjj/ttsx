@@ -1,0 +1,4 @@
+# 指明建立索引的字段
+
+{{ object.name }}  # 商品sku名称
+{{ object.title }}  # 商品sku简介

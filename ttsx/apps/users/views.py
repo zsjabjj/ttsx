@@ -1,3 +1,4 @@
+import json
 import re
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -45,15 +46,14 @@ class UserInfoView(LoginRequiredMixin, View):
         # 查询用户浏览记录信息：存储在redis中，以列表形式存储，存储sku_id, "history_userid: [0,1,2,3,4,5]"
         redis_conn = get_redis_connection('default')
         # 查询redis数据库中的浏览记录,查询最新的五条,将来保存记录时记得从左向右保存
-        sku_ids = redis_conn.lrange('history_%s' % user.id, 0 ,5)
+        sku_ids = redis_conn.lrange('history_%s' % user.id, 0, 5)
         # 遍历sku_ids，分别取出每个sku_id,然后根据sku_id查询商品sku信息
         skuList = list()
         for sku_id in sku_ids:
             sku = GoodsSKU.objects.get(id=sku_id)
             skuList.append(sku)
 
-
-        context = {'address':address, 'skuList':skuList}
+        context = {'address': address, 'skuList': skuList}
 
         return render(request, 'user_center_info.html', context)
 
@@ -111,7 +111,7 @@ class LogoutView(View):
 # 登录
 class LoginView(View):
     def get(self, request):
-        return render(request, 'login.html', {'succmsg':'注册成功'})
+        return render(request, 'login.html', {'succmsg': '注册成功'})
 
     def post(self, request):
         # 获取用户登录数据
@@ -143,6 +143,34 @@ class LoginView(View):
         else:
             # 参数为3600*24*10,cookie中sessionid有效期为十天
             request.session.set_expiry(3600 * 24 * 10)
+
+        # 合并登录和未登录状态下的购物车
+        # 查询购物车数据
+        # cookie
+        cart_json = request.COOKIES.get('cart')
+        if cart_json:
+            cart_dict_cookie = json.loads(cart_json)
+        else:
+            cart_dict_cookie = dict()
+
+        # redis
+        redis_con = get_redis_connection('default')
+        # cart_dict_redis中key和value为bytes类型
+        cart_dict_redis = redis_con.hgetall('cart_%s' % user.id)
+
+        # 将cookie中的数据合并到redis中,取cookie中的数据
+        for sku_id, count in cart_dict_cookie.items():
+            # 需要将cookie中的数据转换为bytes类型
+            sku_id = sku_id.encode()
+            # 判断cookie中的商品,是否在redis中存在
+            if sku_id in cart_dict_redis:
+                origin_count = cart_dict_redis[sku_id]
+                count += int(origin_count)
+            cart_dict_redis[sku_id] = count
+
+        # 一次性向redis中添加多个key和value
+        redis_con.hmset('cart_%s' % user.id, cart_dict_redis)
+
         # 登录后给的响应
         next = request.GET.get('next')
         if next:
@@ -167,7 +195,7 @@ class ActivateView(View):
             ret = serializer.loads(token)
             # print(ret)
         except SignatureExpired:
-        #
+            #
             return HttpResponse('激活链接已过期')
         # 获取id
         user_id = ret['confirm']
@@ -177,7 +205,7 @@ class ActivateView(View):
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
-            return render(request, 'register.html', {'errmsg':'用户不存在,请注册'})
+            return render(request, 'register.html', {'errmsg': '用户不存在,请注册'})
             # return HttpResponse('用户不存在')
         if user.is_active:
             return HttpResponse('已经激活')
@@ -206,16 +234,16 @@ class RegisterView(View):
         # 校验用户信息
         # 使用all(),当all括号中全有值,结果为真,有一为空,就为假
         if not all([username, password, email]):
-            return render(request, 'register.html', {'errmsg':'输入信息有误'})
+            return render(request, 'register.html', {'errmsg': '输入信息有误'})
             # return HttpResponse('用户信息输入有误')
         # 判断邮箱格式是否正确
         ret = re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email)
         if not ret:
-            return render(request, 'register.html', {'errmsg':'输入邮箱地址格式不正确'})
+            return render(request, 'register.html', {'errmsg': '输入邮箱地址格式不正确'})
             # return HttpResponse('输入的邮箱格式不正确')
         # 判断用户是否勾选了用户协议,如果没有勾选用户协议,allow获取到的值为None
         if allow == None:
-            return render(request, 'register.html', {'errmsg':'请勾选用户协议'})
+            return render(request, 'register.html', {'errmsg': '请勾选用户协议'})
             # return HttpResponse('请勾选用户协议')
 
         # 保存数据
@@ -225,7 +253,7 @@ class RegisterView(View):
         # 用以上方法保存数据,自动会将is_active设置为True
         # 将激活状态设置为False,只有在通过激活邮件激活后,才设置为True
         except IntegrityError:
-            return render(request, 'register.html', {'errmsg':'用户名已存在'})
+            return render(request, 'register.html', {'errmsg': '用户名已存在'})
             # return HttpResponse('用户名已存在')
         user.is_active = False
         # 因为数据表中的属性进行了更改,所以需要再次保存数据

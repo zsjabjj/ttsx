@@ -37,7 +37,16 @@
 					<span>|</span>
 					<a href="{% url 'users:userinfo' %}">用户中心</a>
 					<span>|</span>
-					<a href="#">我的购物车</a>
+
+                    <a href="{% url 'cart:info' %}">
+                        {% if user.is_authenticated %}
+                        我的购物车
+                        {% else %}
+                        购物车
+                        {% endif %}
+                    </a>
+
+
 					<span>|</span>
 					<a href="#">我的订单</a>
 				</div>
@@ -48,11 +57,19 @@
 	<div class="search_bar clearfix">
 		<a href="{% url 'goods:index' %}" class="logo fl"><img src="{% static 'images/logo.png' %}" alt="logo"></a>
 		<div class="search_con fl">
-			<input type="text" class="input_text fl" name="" placeholder="搜索商品">
-			<input type="button" class="input_btn fr" name="" value="搜索">
+            <form action="/search/" method="get">
+                <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
+                <input type="button" class="input_btn fr" name="" value="搜索">
+            </form>
 		</div>
 		<div class="guest_cart fr">
-			<a href="#" class="cart_name fl">我的购物车</a>
+			<a href="{% url 'cart:info' %}" class="cart_name fl">
+                {% if user.is_authenticated %}
+                我的购物车
+                {% else %}
+                购物车
+                {% endif %}
+            </a>
 			<div class="goods_count fl" id="show_count">{{ cart_num }}</div>
 		</div>
 	</div>
@@ -73,6 +90,7 @@
 		<p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
+    {% block footer %}{% endblock footer %}
 {% block endscript %}
 
 {% endblock endscript %}
