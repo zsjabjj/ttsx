@@ -1,9 +1,22 @@
 
-{% extends 'userbase.html' %}
+{% extends 'base.html' %}
 
 {% load staticfiles %}
 
+{% block title %}天天生鲜-用户中心{% endblock title %}
 
+
+
+{% block middle %}
+	<div class="search_bar clearfix">
+		<a href="{% url 'goods:index' %}" class="logo fl"><img src="{% static 'images/logo.png' %}"></a>
+		<div class="sub_page_name fl">|&nbsp;&nbsp;&nbsp;&nbsp;用户中心</div>
+		<div class="search_con fr">
+			<input type="text" class="input_text fl" name="" placeholder="搜索商品">
+			<input type="button" class="input_btn fr" name="" value="搜索">
+		</div>
+	</div>
+{% endblock middle %}
 
 {% block body %}
 
@@ -34,12 +47,12 @@
                         {% for sku in skuList %}
                             <li>
                                 {# fastDFS:sku.default_image.url表示存放图片的主机地址 #}
-                                <a href="#"><img src="{{ sku.default_image.url }}"></a>
-                                <h4><a href="#">{{ sku.name }}</a></h4>
+                                <a href="{% url 'goods:detail' sku.id %}"><img src="{{ sku.default_image.url }}"></a>
+                                <h4><a href="{% url 'goods:detail' sku.id %}">{{ sku.name }}</a></h4>
                                 <div class="operate">
                                     <span class="prize">￥{{ sku.price }}</span>
                                     <span class="unit">{{ sku.price }}/{{ sku.unit }}</span>
-                                    <a href="#" class="add_goods" title="加入购物车"></a>
+{#                                    <a href="javascript:;" class="add_goods" title="加入购物车" sku_id="{{ sku.id }}"></a>#}
                                 </div>
                             </li>
                         {% endfor %}
@@ -49,3 +62,34 @@
 		</div>
 </div>
 {% endblock body %}
+
+
+
+{% block endscript %}
+    <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script>
+        // 点击加入购物车
+        $('.add_goods').click(function () {
+
+            // 将商品的id 和 数量发送给后端视图，保存到购物车数据中
+            var req_data = {
+{#                name: 'list',#}
+                sku_id: $('.add_goods').attr("sku_id"),
+                count: '1',
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            };
+            alert(req_data.sku_id);
+            // 使用ajax向后端发送数据
+            $.post('/cart/add', req_data, function (response_data) {
+                if (0 == response_data.code) {
+                    alert(response_data.message);
+
+                } else {
+                    // 添加购物车失败
+                    alert(response_data.message);
+                }
+            });
+        });
+
+    </script>
+{% endblock endscript %}

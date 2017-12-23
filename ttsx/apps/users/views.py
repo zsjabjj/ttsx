@@ -3,6 +3,8 @@ import re
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django_redis import get_redis_connection
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, SignatureExpired
 from django.db import IntegrityError
@@ -167,14 +169,22 @@ class LoginView(View):
                 origin_count = cart_dict_redis[sku_id]
                 count += int(origin_count)
             cart_dict_redis[sku_id] = count
+        if cart_dict_redis:
+            # 一次性向redis中添加多个key和value
+            redis_con.hmset('cart_%s' % user.id, cart_dict_redis)
 
-        # 一次性向redis中添加多个key和value
-        redis_con.hmset('cart_%s' % user.id, cart_dict_redis)
+        # return response
+        # if request.method == 'GET':
+        #     next = request.path
 
         # 登录后给的响应
         next = request.GET.get('next')
         if next:
-            return redirect(next)
+            response = HttpResponseRedirect(next)
+            response.delete_cookie('cart')
+            # if next == '/orders/place':
+            #     return redirect('/cart')
+            return response
         print('2')
         return redirect(reverse('goods:index'))
 

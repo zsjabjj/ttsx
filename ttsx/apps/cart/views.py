@@ -196,6 +196,7 @@ class AddCartView(View):
         # 接收数据：user_id，sku_id，count
         # 前端通过ajax发送post请求,并带有数据
         sku_id = request.POST.get('sku_id')
+        print(sku_id)
         print(type(sku_id))
         count = request.POST.get('count')
         print(count)

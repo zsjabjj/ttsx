@@ -42,6 +42,12 @@
     <div class="goods_detail_con clearfix">
         <div class="goods_detail_pic fl"><img src="{{ sku.default_image.url }}"></div>
 
+        <form method="post" action="{% url 'orders:place' %}">
+
+        {% csrf_token %}
+{#        技巧:设置一个隐藏input标签,来收集form表单中sku_id的值#}
+        <input type="hidden" name="sku_ids" value="{{ sku.id }}">
+
         <div class="goods_detail_list fr">
             <h3>{{ sku.name }}</h3>
             <p>{{ sku.title }}</p>
@@ -64,17 +70,24 @@
             <div class="goods_num clearfix">
                 <div class="num_name fl">数 量：</div>
                 <div class="num_add fl">
-                    <input type="text" class="num_show fl" value="1" id="num_show">
+                    <input type="text" class="num_show fl" name="count" value="1" id="num_show">
                     <a href="javascript:;" class="add fr">+</a>
                     <a href="javascript:;" class="minus fr">-</a>
                 </div>
             </div>
             <div class="total">总价：<em>{{ sku.price }}元</em></div>
             <div class="operate_btn">
-                <a href="javascript:;" class="buy_btn" id="buy_btn">立即购买</a>
+                {% if user.is_authenticated %}
+                <input type="submit" class="buy_btn" id="buy_btn" value="立即购买">
+                {% else %}
+                <a href="{% url 'users:login' %}?next={{ request.path }}" class="buy_btn" id="buy_btn">立即购买</a>
+                {% endif %}
+{#                <input type="submit" class="buy_btn" id="buy_btn" value="立即购买">#}
+{#                <input type="submit" class="buy_btn" id="buy_btn" value="立即购买">#}
                 <a href="javascript:;" class="add_cart" id="add_cart" sku_id="{{ sku.id }}">加入购物车</a>
             </div>
         </div>
+        </form>
     </div>
 
     <div class="main_wrap clearfix">

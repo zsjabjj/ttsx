@@ -26,8 +26,8 @@
 		<li class="col05">小计</li>
 		<li class="col06">操作</li>
 	</ul>
-{#    <form action="/cart/update/" method="post">#}
-{#    {% csrf_token %}#}
+    <form action="{% url 'orders:place' %}" method="post">
+    {% csrf_token %}
     {% for sku in skus %}
 
     <ul class="cart_list_td clearfix" sku_id="{{ sku.id }}">
@@ -54,11 +54,16 @@
 		<li class="col01"><input type="checkbox" name="" checked=''></li>
 		<li class="col02">全选</li>
 		<li class="col03" >合计(不含运费)：<span>¥</span><em id="total_amount">{{ total_amount }}</em><br>共计<b id="total_count">{{ total_count }}</b>件商品</li>
-		<li class="col04"><a href="#">去结算</a></li>
+        {% if user.is_authenticated %}
+        <li class="col04"><input type="submit" id="commit_btn" value="去结算"></li>
+        {% else %}
+            <li class="col04"><a href="{% url 'users:login' %}?next={{ request.path }}" id="commit_btn">去结算</a></li>
+        {% endif %}
+{#		<li class="col04"><a href="javascript:;">去结算</a></li>#}
 {#		<li class="col04"><input type="submit" id="commit_btn">去结算</li>#}
-{#		<li class="col04"><input type="submit" id="commit_btn" value="去结算"></li>#}
+
 	</ul>
-{#    </form>#}
+    </form>
 {% endblock body %}
 
 {% block endscript %}
@@ -206,15 +211,30 @@
 
 		// 全选和全不选
         $('.settlements').find(':checkbox').change(function () {
+{#            alert('1');#}
             // 1.获取当前checkbox的选中状态
             var is_checked = $(this).prop('checked');
             // 2.遍历并设置商品ul中checkbox的选中状态
             $('.cart_list_td').find(':checkbox').each(function () {
+{#                alert('2');#}
                 // 设置每一个goods ul中checkbox的值
                 $(this).prop('checked', is_checked)
             });
             freshOrderCommitInfo();
+{#            updateRemoteCartInfo();#}
         });
+
+{#        $('.settlements').children('li.col04').click(function () {#}
+{#            alert('0');#}
+{#            if ($('.cart_list_td').find(':checkbox').is(':checked')){#}
+{##}
+{#                alert($('.cart_list_td').find(':checked').val())#}
+{#            }#}
+{##}
+{##}
+{#            }#}
+{#        )#}
+
 
 	</script>
 {% endblock endscript %}
